@@ -167,7 +167,7 @@ services:
 
   realtime:
     # This container name looks inconsistent but is correct because realtime constructs tenant id by parsing the subdomain
-    container_name: realtime-dev.supabase-realtime
+    container_name: realtime-dev.plant-list-realtime
     image: supabase/realtime:v2.29.13
     depends_on:
       db:
@@ -254,7 +254,7 @@ services:
       - ./volumes/storage:/var/lib/storage:z
 
   imgproxy:
-    container_name: supabase-imgproxy
+    container_name: plant-list-imgproxy
     image: darthsim/imgproxy:v3.8.0
     healthcheck:
       test: [ "CMD", "imgproxy", "health" ]
