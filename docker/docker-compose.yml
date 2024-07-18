@@ -419,6 +419,8 @@ services:
       - ${DOCKER_SOCKET_LOCATION}:/var/run/docker.sock:ro
     environment:
       LOGFLARE_API_KEY: ${LOGFLARE_API_KEY}
+    env_file:
+      - stack.env
     command: [ "--config", "etc/vector/vector.yml" ]
 
 volumes:
