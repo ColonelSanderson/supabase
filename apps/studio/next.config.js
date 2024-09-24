@@ -431,11 +431,31 @@ const nextConfig = {
   images: {
     // to make Vercel avatars work without issue. Vercel uses SVGs for users who don't have set avatars.
     dangerouslyAllowSVG: true,
-    domains: [
-      'github.com',
-      'avatars.githubusercontent.com',
-      'api-frameworks.vercel.sh',
-      'vercel.com',
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'github.com',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+        port: '',
+        pathname: '/u/*',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api-frameworks.vercel.sh',
+        port: '',
+        pathname: '**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'vercel.com',
+        port: '',
+        pathname: '**',
+      },
     ],
   },
   transpilePackages: [
@@ -463,6 +483,15 @@ const nextConfig = {
   onDemandEntries: {
     maxInactiveAge: 24 * 60 * 60 * 1000,
     pagesBufferLength: 100,
+  },
+  typescript: {
+    // WARNING: production builds can successfully complete even there are type errors
+    // Typechecking is checked separately via .github/workflows/typecheck.yml
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    // We are already running linting via GH action, this will skip linting during production build on Vercel
+    ignoreDuringBuilds: true,
   },
 }
 

@@ -63,6 +63,14 @@ Sentry.init({
     // Error thrown by `sql-formatter` lexer when given invalid input
     // Original format: new Error(`Parse error: Unexpected "${text}" at line ${line} column ${col}`)
     /^Parse error: Unexpected ".+" at line \d+ column \d+$/,
+    // [Joshen] IMO, should be caught on API if there's anything to handle - FE shouldn't dupe this alert
+    /504 Gateway Time-out/,
+    // [Joshen] This is the one caused by Google translate in the browser + 3rd party extensions
+    'Node.insertBefore: Child to insert before is not a child of this node',
+    // [Joshen] This one sprung up recently and I've no idea where this is coming from
+    'r.default.setDefaultLevel is not a function',
+    // [Joshen] Safe to ignore, it an error from the copyToClipboard
+    'The request is not allowed by the user agent or the platform in the current context, possibly because the user denied permission.',
   ],
 })
 
@@ -71,7 +79,7 @@ Sentry.init({
 function standardiseRouterUrl(url: string) {
   let finalUrl = url
 
-  const orgMatch = match('/org/:slug/(.*)', { decode: decodeURIComponent })
+  const orgMatch = match('/org/:slug{/*path}', { decode: decodeURIComponent })
   const orgMatchResult = orgMatch(finalUrl)
   if (orgMatchResult) {
     finalUrl = finalUrl.replace((orgMatchResult.params as any).slug, '[slug]')
@@ -83,7 +91,7 @@ function standardiseRouterUrl(url: string) {
     finalUrl = finalUrl.replace((newOrgMatchResult.params as any).slug, '[slug]')
   }
 
-  const projectMatch = match('/project/:ref/(.*)', { decode: decodeURIComponent })
+  const projectMatch = match('/project/:ref{/*path}', { decode: decodeURIComponent })
   const projectMatchResult = projectMatch(finalUrl)
   if (projectMatchResult) {
     finalUrl = finalUrl.replace((projectMatchResult.params as any).ref, '[ref]')

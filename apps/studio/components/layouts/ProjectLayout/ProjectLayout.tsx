@@ -7,7 +7,10 @@ import ProjectAPIDocs from 'components/interfaces/ProjectAPIDocs/ProjectAPIDocs'
 import AISettingsModal from 'components/ui/AISettingsModal'
 import { Loading } from 'components/ui/Loading'
 import ResourceExhaustionWarningBanner from 'components/ui/ResourceExhaustionWarningBanner/ResourceExhaustionWarningBanner'
-import { useFlag, useSelectedOrganization, useSelectedProject, withAuth } from 'hooks'
+import { useSelectedOrganization } from 'hooks/misc/useSelectedOrganization'
+import { useSelectedProject } from 'hooks/misc/useSelectedProject'
+import { withAuth } from 'hooks/misc/withAuth'
+import { useFlag } from 'hooks/ui/useFlag'
 import { IS_PLATFORM, PROJECT_STATUS } from 'lib/constants'
 import { useDatabaseSelectorStateSnapshot } from 'state/database-selector'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup, cn } from 'ui'
@@ -22,7 +25,7 @@ import PauseFailedState from './PauseFailedState'
 import PausingState from './PausingState'
 import ProductMenuBar from './ProductMenuBar'
 import { ProjectContextProvider } from './ProjectContext'
-import ProjectPausedState from './ProjectPausedState'
+import { ProjectPausedState } from './PausedState/ProjectPausedState'
 import RestartingState from './RestartingState'
 import RestoreFailedState from './RestoreFailedState'
 import RestoringState from './RestoringState'
@@ -41,6 +44,7 @@ const routesToIgnoreProjectDetailsRequest = [
 const routesToIgnoreDBConnection = [
   '/project/[ref]/branches',
   '/project/[ref]/database/backups/scheduled',
+  '/project/[ref]/database/backups/pitr',
   '/project/[ref]/settings/addons',
 ]
 
@@ -86,6 +90,11 @@ const ProjectLayout = ({
   const navLayoutV2 = useFlag('navigationLayoutV2')
 
   const isPaused = selectedProject?.status === PROJECT_STATUS.INACTIVE
+  const showProductMenu = selectedProject
+    ? selectedProject.status === PROJECT_STATUS.ACTIVE_HEALTHY ||
+      (selectedProject.status === PROJECT_STATUS.COMING_UP &&
+        router.pathname.includes('/project/[ref]/settings'))
+    : true
   const ignorePausedState =
     router.pathname === '/project/[ref]' || router.pathname.includes('/project/[ref]/settings')
   const showPausedState = isPaused && !ignorePausedState
@@ -116,11 +125,11 @@ const ProjectLayout = ({
             direction="horizontal"
             autoSaveId="project-layout"
           >
-            {!showPausedState && productMenu && (
+            {showProductMenu && productMenu && (
               <>
                 <ResizablePanel
                   className={cn(resizableSidebar ? 'min-w-64 max-w-[32rem]' : 'min-w-64 max-w-64')}
-                  defaultSize={1} // forces panel to smallest width possible, at w-64
+                  defaultSize={0} // forces panel to smallest width possible, at w-64
                 >
                   <MenuBarWrapper
                     isLoading={isLoading}
@@ -218,6 +227,7 @@ const ContentWrapper = ({ isLoading, isBlocking = true, children }: ContentWrapp
 
   const isSettingsPages = router.pathname.includes('/project/[ref]/settings')
   const isVaultPage = router.pathname === '/project/[ref]/settings/vault'
+  const isBackupsPage = router.pathname.includes('/project/[ref]/database/backups')
 
   const requiresDbConnection: boolean =
     (!isSettingsPages && !routesToIgnoreDBConnection.includes(router.pathname)) || isVaultPage
@@ -245,11 +255,11 @@ const ContentWrapper = ({ isLoading, isBlocking = true, children }: ContentWrapp
     return router.pathname.endsWith('[ref]') ? <LoadingState /> : <Loading />
   }
 
-  if (isRestarting) {
+  if (isRestarting && !isBackupsPage) {
     return <RestartingState />
   }
 
-  if (isProjectUpgrading) {
+  if (isProjectUpgrading && !isBackupsPage) {
     return <UpgradingState />
   }
 
@@ -269,7 +279,7 @@ const ContentWrapper = ({ isLoading, isBlocking = true, children }: ContentWrapp
     return <RestoringState />
   }
 
-  if (isProjectRestoreFailed) {
+  if (isProjectRestoreFailed && !isBackupsPage) {
     return <RestoreFailedState />
   }
 
